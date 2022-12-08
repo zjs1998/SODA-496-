@@ -1,0 +1,118 @@
+---
+title: "SODA 496"
+author: "Jingsheng Zhang"
+date: "2022-11-29"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(rtweet)
+library(dplyr)
+library(tidyr)
+library(tidytext)
+library(twitteR)
+library(ggplot2)
+```
+
+
+```{r}
+data1= read.csv("2021.12.01.csv")
+```
+
+
+```{r}
+tweets.wuhan = data1 %>% select(Tweets)
+head(tweets.wuhan$Tweets)
+tweets.wuhan$stripped_text <- gsub("http\\S+","", tweets.wuhan$Tweets)
+```
+
+```{r}
+tweets.wuhan_stem <- tweets.wuhan %>%
+  select(stripped_text) %>%
+  unnest_tokens(word,stripped_text)
+
+head(tweets.wuhan_stem)
+```
+```{r}
+cleaned_tweets.wuhan <- tweets.wuhan_stem %>%
+  anti_join(stop_words)
+head(cleaned_tweets.wuhan)
+```
+```{r}
+head(tweets.wuhan$Tweets)
+```
+
+
+```{r}
+cleaned_tweets.wuhan %>%
+  count(word, sort = TRUE) %>%
+  top_n(10) %>% 
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = word, y = n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip() +
+  theme_classic() +
+  labs(
+    x = "Unique words",
+    y = "Count",
+    title = "Top 10 Unique word counts found in #wuhan tweets"
+  )
+```
+
+```{r}
+get_sentiments("bing") %>% filter(sentiment == "positive")
+```
+
+```{r}
+get_sentiments("bing") %>% filter(sentiment == "negative")
+```
+
+```{r}
+bing_wuhan = cleaned_tweets.wuhan %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+bing_wuhan
+```
+
+
+```{r}
+bing_wuhan %>%
+  group_by(sentiment) %>%
+  top_n(10) %>%
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(shou.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(title = "Top 10 negative and positive words in Tweets containing '#wuhan'",
+       y = "Contribution to sentiment",
+       x = NULL) +
+  coord_flip() + theme_bw()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
